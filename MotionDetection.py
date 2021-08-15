@@ -20,7 +20,7 @@ class MotionDetection:
             currentImage = Image.open(stream)
             currentImageBuffer = currentImage.load()
             detectedMotion = self.__compareImages(currentImageBuffer, self.priorImageBuffer)            
-            self.priorImage = currentImage
+            self.priorImageBuffer = currentImageBuffer
             stream.close()
             return detectedMotion
         
