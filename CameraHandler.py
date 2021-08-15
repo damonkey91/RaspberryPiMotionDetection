@@ -35,12 +35,13 @@ class CameraHandler:
                     self.write_video(stream)
                     # Wait until motion is no longer detected, then split
                     # recording back to the in-memory circular buffer
-                    while detect_motion(camera):
+                    while self.motionDetector.detectedMotion(self.getMotionDetectionImage()):
                         camera.wait_recording(1)
                     print('Motion stopped!')
                     camera.split_recording(stream)
         except Exception as err:
-            LoggerWrapper.logError('Error in your code = {0}'.format(err))
+            #LoggerWrapper.logError('Error in your code = {0}'.format(err))
+            pass
         finally:
             camera.stop_recording()
 
