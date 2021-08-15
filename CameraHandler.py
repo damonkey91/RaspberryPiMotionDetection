@@ -85,7 +85,7 @@ class CameraHandler:
     
     def getMotionDetectionImage(self):
         stream = io.BytesIO()
-        CameraHandler.camera.capture(stream, format='jpeg', use_video_port=True)
+        self.getCamera().capture(stream, format='jpeg', use_video_port=True)
         return stream
 
     def getCamera(self):

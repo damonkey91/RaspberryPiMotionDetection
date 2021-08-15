@@ -10,7 +10,15 @@ A small project for me to learn python and raspberry pi. The script starts recor
 - python v3.8.0
 - python packages
 
-## Installation
+## Installations
+Install python packages
+```python
+sudo apt-get install python3-picamera
+python3 -m pip install Pillow
+python3 -m pip install Pyrebase
+```
+
+To setup firebase project with pyrebase follow [this tutorial](https://www.youtube.com/watch?v=I1eskLk0exg).
 
 ## Thanks to
 - [Dave Jones](https://github.com/waveform80) for the [picamera library](https://github.com/waveform80/picamera) and [docs](https://picamera.readthedocs.io)
