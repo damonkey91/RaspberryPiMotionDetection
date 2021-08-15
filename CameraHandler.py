@@ -1,7 +1,7 @@
 import picamera
 import os
 import io
-import time
+import datetime
 
 class CameraHandler:
     __camera = picamera.PiCamera()
@@ -12,8 +12,8 @@ class CameraHandler:
         self.getCamera().resolution = (640, 480)
         self.storage = storage
         self.motionDetector = motionDetection
-        self.fileType = "jpg"
-        self.filepath = "/home/pi/images/"
+        self.fileType = "jpeg"
+        self.filepath = os.path.join(os.path.dirname(__file__), "SavedFiles")
         self.filenamePrefix = "window"
 
     def startSurveillance(self):
@@ -28,6 +28,7 @@ class CameraHandler:
 
                 if detectedMotion:
                     print('Motion detected!')
+                    self.captureImage()
                     # As soon as we detect motion, split the recording to
                     # record the frames "after" motion
                     camera.split_recording('after.h264')
@@ -36,10 +37,12 @@ class CameraHandler:
                     # Wait until motion is no longer detected, then split
                     # recording back to the in-memory circular buffer
                     while self.motionDetector.detectedMotion(self.getMotionDetectionImage()):
+                        self.captureImage()
                         camera.wait_recording(1)
                     print('Motion stopped!')
                     camera.split_recording(stream)
         except Exception as err:
+            print(err)
             #LoggerWrapper.logError('Error in your code = {0}'.format(err))
             pass
         finally:
@@ -66,11 +69,10 @@ class CameraHandler:
     def captureImage(self):
         camera = self.getCamera()
         time = datetime.now()
-        filename = filenamePrefix + "-%04d_%02d_%02d-%02d%02d%02d" % (
-            time.year, time.month, time.day, time.hour, time.minute, time.second) + "." + fileType
-        fullfilename = filepath + filename
+        filename = self.filenamePrefix + "-%04d_%02d_%02d-%02d%02d%02d" % (
+            time.year, time.month, time.day, time.hour, time.minute, time.second) + "." + self.fileType
+        fullfilename = os.path.join(self.filepath, filename)
         camera.capture(fullfilename, format='jpeg', use_video_port=True)
-        camera.wait_recording(60)
     
     def startRecording(self):
         pass
