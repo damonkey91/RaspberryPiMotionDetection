@@ -1,7 +1,7 @@
 import picamera
 import os
 import io
-import datetime
+from datetime import datetime
 
 class CameraHandler:
     __camera = picamera.PiCamera()
