@@ -31,7 +31,7 @@ class CameraHandler:
                     self.captureImage()
                     # As soon as we detect motion, split the recording to
                     # record the frames "after" motion
-                    camera.split_recording('after.h264')
+                    camera.split_recording(self.__createFilename("after", "h264"))
                     # Write the 10 seconds "before" motion to disk as well
                     self.write_video(stream)
                     # Wait until motion is no longer detected, then split
@@ -52,7 +52,7 @@ class CameraHandler:
         # Write the entire content of the circular buffer to disk. No need to
         # lock the stream here as we're definitely not writing to it
         # simultaneously
-        with io.open('before.h264', 'wb') as output:
+        with io.open(self.__createFilename("before", "h264"), 'wb') as output:
             for frame in stream.frames:
                 if frame.frame_type == picamera.PiVideoFrameType.sps_header:
                     stream.seek(frame.position)
@@ -68,12 +68,9 @@ class CameraHandler:
 
     def captureImage(self):
         camera = self.getCamera()
-        time = datetime.now()
-        filename = self.filenamePrefix + "-%04d_%02d_%02d-%02d%02d%02d" % (
-            time.year, time.month, time.day, time.hour, time.minute, time.second) + "." + self.fileType
-        fullfilename = os.path.join(self.filepath, filename)
+        fullfilename = self.__createFilename(self.filenamePrefix, self.fileType)
         camera.capture(fullfilename, format='jpeg', use_video_port=True)
-    
+
     def startRecording(self):
         pass
     
@@ -93,3 +90,10 @@ class CameraHandler:
 
     def getCamera(self):
         return CameraHandler.__camera
+
+    def __createFilename(self, fileStarter: str, filetype: str):
+        time = datetime.now()
+        filename = fileStarter + "-%04d_%02d_%02d-%02d%02d%02d" % (
+            time.year, time.month, time.day, time.hour, time.minute, time.second) + "." + filetype
+        fullfilename = os.path.join(self.filepath, filename)
+        return fullfilename
