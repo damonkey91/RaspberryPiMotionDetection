@@ -38,5 +38,3 @@ class MotionDetection:
                 return True
             
         return False
-
-#------Cirkular stream https://picamera.readthedocs.io/en/release-1.10/recipes2.html#splitting-to-from-a-circular-stream

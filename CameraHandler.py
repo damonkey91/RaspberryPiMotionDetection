@@ -1,19 +1,16 @@
 import picamera
-import os
 import io
-from datetime import datetime
 
 class CameraHandler:
     __camera = picamera.PiCamera()
 
     # filepath       - location of folder to save photos
     # filenamePrefix - string that prefixes the file name for easier identification of files.
-    def __init__(self, motionDetection, storage):
+    def __init__(self, motionDetection, storageHandler):
         self.getCamera().resolution = (640, 480)
-        self.storage = storage
+        self.storageHandler = storageHandler
         self.motionDetector = motionDetection
         self.fileType = "jpeg"
-        self.filepath = os.path.join(os.path.dirname(__file__), "SavedFiles")
         self.filenamePrefix = "window"
 
     def startSurveillance(self):
@@ -31,9 +28,10 @@ class CameraHandler:
                     self.captureImage()
                     # As soon as we detect motion, split the recording to
                     # record the frames "after" motion
-                    camera.split_recording(self.__createFilename("after", "h264"))
+                    videoAfterFilePath = self.storageHandler.createFilename("after", "h264")
+                    camera.split_recording(videoAfterFilePath)
                     # Write the 10 seconds "before" motion to disk as well
-                    self.write_video(stream)
+                    self.storageHandler.write_video(stream, picamera.PiVideoFrameType.sps_header)
                     # Wait until motion is no longer detected, then split
                     # recording back to the in-memory circular buffer
                     while self.motionDetector.detectedMotion(self.getMotionDetectionImage()):
@@ -41,6 +39,7 @@ class CameraHandler:
                         camera.wait_recording(1)
                     print('Motion stopped!')
                     camera.split_recording(stream)
+                    self.storageHandler.uploadAndRemoveFile(videoAfterFilePath)
         except Exception as err:
             print(err)
             #LoggerWrapper.logError('Error in your code = {0}'.format(err))
@@ -48,28 +47,11 @@ class CameraHandler:
         finally:
             camera.stop_recording()
 
-    def write_video(self, stream):
-        # Write the entire content of the circular buffer to disk. No need to
-        # lock the stream here as we're definitely not writing to it
-        # simultaneously
-        with io.open(self.__createFilename("before", "h264"), 'wb') as output:
-            for frame in stream.frames:
-                if frame.frame_type == picamera.PiVideoFrameType.sps_header:
-                    stream.seek(frame.position)
-                    break
-            while True:
-                buf = stream.read1()
-                if not buf:
-                    break
-                output.write(buf)
-        # Wipe the circular stream once we're done
-        stream.seek(0)
-        stream.truncate()
-
     def captureImage(self):
         camera = self.getCamera()
-        fullfilename = self.__createFilename(self.filenamePrefix, self.fileType)
+        fullfilename = self.storageHandler.createFilename(self.filenamePrefix, self.fileType)
         camera.capture(fullfilename, format='jpeg', use_video_port=True)
+        self.storageHandler.uploadAndRemoveFile(fullfilename)
 
     def startRecording(self):
         pass
@@ -90,10 +72,3 @@ class CameraHandler:
 
     def getCamera(self):
         return CameraHandler.__camera
-
-    def __createFilename(self, fileStarter: str, filetype: str):
-        time = datetime.now()
-        filename = fileStarter + "-%04d_%02d_%02d-%02d%02d%02d" % (
-            time.year, time.month, time.day, time.hour, time.minute, time.second) + "." + filetype
-        fullfilename = os.path.join(self.filepath, filename)
-        return fullfilename
